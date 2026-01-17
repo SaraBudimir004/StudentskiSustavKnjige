@@ -11,7 +11,6 @@ public class RoleService {
     @Autowired
     private RoleRepository roleRepository;
 
-    // Kreira novu ulogu (ADMIN, USER)
     public Role createRole(String roleName) {
         if(roleRepository.findByName(roleName).isPresent()) {
             throw new RuntimeException("Uloga već postoji!");
@@ -22,11 +21,7 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
-    // Dohvati role po imenu
     public Role getRoleByName(String name) {
-        return roleRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("Uloga ne postoji"));
+        return roleRepository.findByName(name).orElse(null);
     }
 }
-
-

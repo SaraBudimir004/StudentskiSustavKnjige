@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -28,12 +27,19 @@ public class UserService {
         if(userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Korisnik već postoji!");
         }
-
+        //Dohvat uloge iz baze(ako ne postoji baca gresku)
         Role role = roleRepository.findByName(roleName.toUpperCase())
-                .orElseThrow(() -> new RuntimeException("Uloga ne postoji"));
+                .orElseThrow(() -> new RuntimeException("Uloga " + roleName + " ne postoji u bazi podataka!"));
 
-        User user = new User(name, lastname, email, passwordEncoder.encode(password));
-        user.setRoles(Collections.singleton(role));
+        // Kreiranje novog korisnika
+        User user = new User();
+        user.setName(name);
+        user.setLastname(lastname);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));//haskiranje lozinke
+
+        // Postavljanje uloge
+        user.getRoles().add(role);
 
         return userRepository.save(user);
     }
