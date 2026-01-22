@@ -9,7 +9,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 public class JWTUtil {
@@ -18,14 +17,17 @@ public class JWTUtil {
     private String secret;
 
     @Value("${jwt.expiration}")
-    private Long expiration; // trajanje tokena u ms
+    private Long expiration; // access token
+
+    @Value("${jwt.refresh-expiration}")
+    private Long refreshExpiration; // refresh token
 
     // Dobiva SecretKey za potpisivanje
     public SecretKey getSigningKey() {
         return new SecretKeySpec(secret.getBytes(), "HmacSHA256");
     }
 
-    // Generira token za username i role
+    // Generira token za username i role(access token)
     public String generateToken(String username, List<String> roles) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
@@ -39,9 +41,18 @@ public class JWTUtil {
                 .compact();
     }
 
-    // Generira refresh token, uuid daje nasumicni string
-    public String generateRefreshToken() {
-        return UUID.randomUUID().toString();
+    // Refresh token
+    public String generateRefreshToken(String username) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshExpiration);
+
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("type", "refresh")
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
     }
 
     // Provjera tokena,datum isteka i format tokena
