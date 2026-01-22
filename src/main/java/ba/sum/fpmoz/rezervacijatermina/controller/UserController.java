@@ -1,7 +1,9 @@
 package ba.sum.fpmoz.rezervacijatermina.controller;
 
+import ba.sum.fpmoz.rezervacijatermina.dto.ChangePassword;
 import ba.sum.fpmoz.rezervacijatermina.models.User;
 import ba.sum.fpmoz.rezervacijatermina.repository.UserRepository;
+import ba.sum.fpmoz.rezervacijatermina.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -9,11 +11,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Optional;
 @Tag(
         name = "User Controller",
@@ -30,38 +33,10 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Operation(
-            summary = "Dohvati korisnika po ID-u",
-            description = "Samo ADMIN korisnik može dohvatiti korisnika po ID-u"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Korisnik pronađen"),
-            @ApiResponse(responseCode = "404", description = "Korisnik nije pronađen"),
-            @ApiResponse(responseCode = "403", description = "Zabranjen pristup")
-    })
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> getUserById(@PathVariable Long id){
-        Optional<User> user = userRepository.findById(id);
-        return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(404).build());
-    }
+    @Autowired
+    private UserService userService;
 
-    @Operation(
-            summary = "Dohvati sve korisnike",
-            description = "Samo ADMIN korisnik može dohvatiti listu svih korisnika"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista korisnika"),
-            @ApiResponse(responseCode = "403", description = "Zabranjen pristup")
-    })
-    @GetMapping("/all")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Iterable<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-//DOhvaca trenutno prijavljenog korisnika
+    //Dohvaca trenutno prijavljenog korisnika
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -75,4 +50,32 @@ public class UserController {
             return ResponseEntity.status(401).build();
         }
     }
+    @Operation(
+            summary = "Promjena lozinke",
+            description = "Korisnik može promijeniti svoju lozinku tako da unese staru i novu lozinku."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lozinka je uspješno promijenjena"),
+            @ApiResponse(responseCode = "400", description = "Stara lozinka nije ispravna"),
+            @ApiResponse(responseCode = "401", description = "Korisnik nije prijavljen")
+    })
+
+
+    @PutMapping("/change-password")
+    //Promjena lozinke za usera
+    public ResponseEntity<?> changePassword(
+            @RequestBody ChangePassword request,
+            Authentication authentication
+    ) {
+        String email = authentication.getName(); // dolazi iz JWT-a
+
+        userService.changePassword(
+                email,
+                request.getOldPassword(),
+                request.getNewPassword()
+        );
+
+        return ResponseEntity.ok("Lozinka uspješno promijenjena");
+    }
+
 }
