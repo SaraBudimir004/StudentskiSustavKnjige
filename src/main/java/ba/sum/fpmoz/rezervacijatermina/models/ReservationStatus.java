@@ -1,4 +1,5 @@
 package ba.sum.fpmoz.rezervacijatermina.models;
 
-public class ReservationStatus {
+public enum ReservationStatus {
+    ACTIVE, CANCELED;
 }
