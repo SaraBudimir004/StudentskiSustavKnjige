@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 @Tag(
         name = "User Controller",
-        description = "Operacije nad korisnicima. Neke rute su dostupne samo ADMIN korisnicima."
+        description = "Operacije nad korisnicima."
 )
 @SecurityRequirement(name = "bearerAuth")
 @RestController

@@ -9,10 +9,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 @RestController
@@ -53,4 +51,35 @@ public class AdminController {
     public Iterable<User> getAllUsers() {
         return userRepository.findAll();
     }
+    @Operation(
+            summary = "Brisanje korisničkog računa",
+            description = "Samo ADMIN može obrisati korisnika po ID-u. Admin ne može obrisati sam sebe."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Korisnik uspješno obrisan"),
+            @ApiResponse(responseCode = "400", description = "Admin ne može obrisati sam sebe"),
+            @ApiResponse(responseCode = "404", description = "Korisnik nije pronađen"),
+            @ApiResponse(responseCode = "403", description = "Zabranjen pristup")
+    })
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id, Authentication authentication) {
+
+        String adminEmail = authentication.getName();
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new RuntimeException("Admin nije pronađen"));
+
+        if (admin.getId().equals(id)) {
+            return ResponseEntity.badRequest().body("Admin ne može obrisati sam sebe");
+        }
+
+        User userToDelete = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Korisnik nije pronađen"));
+
+        // Ovo automatski briše sve rezervacije korisnika
+        userRepository.delete(userToDelete);
+
+        return ResponseEntity.ok("Korisnik uspješno obrisan");
+    }
+
 }

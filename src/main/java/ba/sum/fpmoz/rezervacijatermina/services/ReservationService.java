@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -41,11 +42,28 @@ public class ReservationService {
 
         LocalDate parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
 
+        // Provjera da datum nije u prošlosti
+        if(parsedDate.isBefore(LocalDate.now())) {
+            throw new RuntimeException("Ne možete rezervirati za prošli datum");
+        }
+        // Definiramo cijeli dan
+        LocalDateTime startOfDay = parsedDate.atTime(10, 0);
+        LocalDateTime endOfDay = parsedDate.atTime(20, 0);
+
+        // Provjera kapaciteta
+        int currentReservations = reservationRepository
+                .countByRoomAndStartTimeBetweenAndStatus(room, startOfDay, endOfDay, ReservationStatus.ACTIVE);
+
+        if (currentReservations >= room.getCapacity()) {
+            throw new RuntimeException("Soba je popunjena za taj dan");
+        }
+
+        // Kreiranje rezervacije
         Reservation reservation = new Reservation();
         reservation.setUser(user);
         reservation.setRoom(room);
-        reservation.setStartTime(parsedDate.atTime(10, 0));
-        reservation.setEndTime(parsedDate.atTime(12, 0));
+        reservation.setStartTime(startOfDay);
+        reservation.setEndTime(endOfDay);
         reservation.setStatus(ReservationStatus.ACTIVE);
 
         return reservationRepository.save(reservation);

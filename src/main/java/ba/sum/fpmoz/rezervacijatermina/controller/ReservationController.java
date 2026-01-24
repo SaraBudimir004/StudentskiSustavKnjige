@@ -60,7 +60,7 @@ public class ReservationController {
     @Operation(summary = "Otkaži rezervaciju")
     @ApiResponse(responseCode = "200", description = "Rezervacija otkazana")
     @PutMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Reservation> cancelReservation(@PathVariable Long id) {
         return ResponseEntity.ok(reservationService.cancelReservation(id));
     }

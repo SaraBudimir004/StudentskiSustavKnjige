@@ -1,9 +1,21 @@
 package ba.sum.fpmoz.rezervacijatermina.dto;
 
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class ChangePassword {
 
+    @Schema(
+            description = "Stara lozinka korisnika",
+            example = "lozinka123"
+    )
+
     private String oldPassword;
+
+    @Schema(
+            description = "Nova lozinka korisnika",
+            example = "123456"
+    )
     private String newPassword;
 
     public String getOldPassword() {

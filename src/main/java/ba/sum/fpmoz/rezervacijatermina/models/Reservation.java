@@ -25,6 +25,7 @@ public class Reservation {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Schema(description = "Korisnik koji je napravio rezervaciju")
     private User user;
 
